@@ -28,3 +28,11 @@ class DadosMedico(models.Model):
 
     def __str__(self) -> str:
         return self.user.username
+
+class DatasAbertas(models.Model):
+    data = models.DateTimeField()
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    agendado = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return str(self.data)
