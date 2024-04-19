@@ -9,7 +9,7 @@
 
 
 {% block 'body' %}
-
+{% include "partials/navbar.html" %}
 
     <div class="container">
 
@@ -33,7 +33,7 @@
                 <br>
                 <p style="font-size: 25px" class="p-bold">Abrir horários para consultas</p>
                 <hr>
-                <form action="{% url 'abir_horario' %}" method="POST">
+                <form action="{% url 'abrir_horario' %}" method="POST">
                     {% csrf_token %}
                     <label for="">Escolher data:</label>
                     <input type="datetime-local" name="data" class="form-control shadow-main-color">
