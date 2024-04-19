@@ -44,7 +44,7 @@ def agendar_horario(request, id_data_aberta):
         data_aberta.save()
 
         messages.add_message(request, constants.SUCCESS, 'Consulta agendada com sucesso')
-        return redirect('pacientes/minhas_consulta/')
+        return redirect('pacientes/minhas_consultas/')
         
 def minhas_consultas(request):
     # Todo: Implement this filter of this method
