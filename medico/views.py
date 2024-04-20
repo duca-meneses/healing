@@ -13,7 +13,7 @@ def cadastro_medico(request):
     
     if is_medico(request.user):
         messages.add_message(request, constants.WARNING, 'Você ja esta cadastrado como medico')
-        return redirect('/medicos/abir_horario')
+        return redirect('/medicos/abrir_horario')
             
     if request.method == 'GET':
         especialidades = Especialidades.objects.all()
@@ -50,7 +50,7 @@ def cadastro_medico(request):
         dados_medico.save()
 
         messages.add_message(request, constants.SUCCESS, 'Cadastro médico realizado com sucesso!')
-        return redirect('/medicos/abir_horario')
+        return redirect('/medicos/abrir_horario')
 
 
 def abrir_horario(request):
@@ -94,4 +94,43 @@ def consultas_medico(request):
     consultas_restantes = Consulta.objects.exclude(id__in=consultas_hoje.values('id'))
     
     return render(request, 'consultas_medico.html', {'consultas_hoje': consultas_hoje, 'consultas_restantes': consultas_restantes, 'is_medico': is_medico(request.user)})
-        
+
+
+def consulta_area_medico(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING, 'Somente médicos podem abrir horários.')
+        return redirect('/usuarios/sair')
+
+    if request.method == 'GET':
+        consulta = Consulta.objects.get(id=id_consulta)
+        return render(request, 'consulta_area_medico.html', {'consulta': consulta, 'is_medico': is_medico(request.user)})
+    elif request.method == 'POST':
+        consulta = Consulta.objects.get(id=id_consulta)
+        link = request.POST.get('link')
+
+        if consulta.status == 'C':
+            messages.add_message(request, constants.WARNING, 'Essa consulta já foi cancelada.')
+            return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+        elif consulta.status == 'F':
+            messages.add_message(request, constants.WARNING, 'Essa consulta já foi finalizada.')
+            return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+        consulta.link = link
+        consulta.status = 'I'
+        consulta.save()
+        messages.add_message(request, constants.SUCCESS, 'Consulta Inicializada!')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+def finalizar_consulta(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING, 'Somente médicos podem abrir horários.')
+        return redirect('/usuarios/sair')
+
+    consulta = Consulta.objects.get(id=id_consulta)
+    if request.user != consulta.data_aberta.user:
+        messages.add_message(request, constants.ERROR, 'Essa consulta não é sua')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+    consulta.status = 'F'
+    consulta.save()
+    return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+    

@@ -55,4 +55,16 @@ def consulta(request, id_consulta):
     if request.method == 'GET':
         consulta = Consulta.objects.get(id=id_consulta)
         dado_medico = DadosMedico.objects.get(user=consulta.data_aberta.user)
-        return render(request, 'consulta.html',{'consulta':consulta, 'dado_medico': dado_medico})
+        return render(request, 'consulta.html',{'consulta':consulta, 'dado_medico': dado_medico, 'is_medico': is_medico(request.user)})
+
+def cancelar_consulta(request, id_consulta):
+
+    consulta = Consulta.objects.get(id=id_consulta)
+    if request.user != consulta.paciente:
+        messages.add_message(request, constants.ERROR, 'Você não pode cancelar uma consulta que não é sua')
+        return redirect(f'/pacientes/consulta/{id_consulta}')
+
+    consulta.status = 'C'
+    consulta.save()
+    messages.add_message(request, constants.SUCCESS, 'Consulta Cancelada com sucesso')
+    return redirect(f'/pacientes/consulta/{id_consulta}')
