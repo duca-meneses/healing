@@ -5,7 +5,7 @@ from medico.models import Especialidades, DadosMedico, is_medico, DatasAbertas
 from django.contrib import messages
 from django.contrib.messages import constants
 
-from paciente.models import Consulta
+from paciente.models import Consulta, Documento
 
 
 def cadastro_medico(request):
@@ -91,7 +91,8 @@ def consultas_medico(request):
         data_aberta__user=request.user).filter(
             data_aberta__data__gte=hoje).filter(data_aberta__data__lt=hoje + timedelta(days=1))
 
-    consultas_restantes = Consulta.objects.exclude(id__in=consultas_hoje.values('id'))
+    consultas_restantes = Consulta.objects.exclude(
+        id__in=consultas_hoje.values('id')).filter(data_aberta__user=request.user)
     
     return render(request, 'consultas_medico.html', {'consultas_hoje': consultas_hoje, 'consultas_restantes': consultas_restantes, 'is_medico': is_medico(request.user)})
 
@@ -103,7 +104,8 @@ def consulta_area_medico(request, id_consulta):
 
     if request.method == 'GET':
         consulta = Consulta.objects.get(id=id_consulta)
-        return render(request, 'consulta_area_medico.html', {'consulta': consulta, 'is_medico': is_medico(request.user)})
+        documentos = Documento.objects.filter(consulta=consulta)
+        return render(request, 'consulta_area_medico.html', {'consulta': consulta, 'is_medico': is_medico(request.user), 'documentos': documentos})
     elif request.method == 'POST':
         consulta = Consulta.objects.get(id=id_consulta)
         link = request.POST.get('link')
@@ -129,8 +131,33 @@ def finalizar_consulta(request, id_consulta):
     consulta = Consulta.objects.get(id=id_consulta)
     if request.user != consulta.data_aberta.user:
         messages.add_message(request, constants.ERROR, 'Essa consulta não é sua')
-        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+        return redirect(f'/medicos/abrir_horario/')
     consulta.status = 'F'
     consulta.save()
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
-    
+
+def add_documento(request, id_consulta):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING, 'Somente médicos podem abrir horários.')
+        return redirect('/usuarios/sair')
+
+    consulta = Consulta.objects.get(id=id_consulta)
+    if request.user != consulta.data_aberta.user:
+        messages.add_message(request, constants.ERROR, 'Essa consulta não é sua')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+    titulo = request.POST.get('titulo')
+    documento_request = request.FILES.get('documento')
+
+    if not documento_request:
+        messages.add_message(request, constants.ERROR, 'Preencha o campo documento.')
+        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+    documento = Documento(
+        consulta=consulta,
+        titulo=titulo,
+        documento=documento_request
+    )
+    documento.save()
+    messages.add_message(request, constants.SUCCESS, 'Documento enviado com sucesso.')
+    return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
