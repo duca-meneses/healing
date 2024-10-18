@@ -161,3 +161,18 @@ def add_documento(request, id_consulta):
     documento.save()
     messages.add_message(request, constants.SUCCESS, 'Documento enviado com sucesso.')
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
+def dashboard(request):
+    if not is_medico(request.user):
+        messages.add_message(request, constants.WARNING, 'Somente médicos podem abir a dashboard')
+        return redirect('/usuarios/sair')
+
+    consultas = Consulta.objects.filter(data_aberta__user=request.user).filter(
+        data_aberta__data__range=[
+            datetime.now().date() - timedelta(days=7), datetime.now().date() + timedelta(days=1)])\
+            .values('data_aberta__data').annotate(quantidade=Count('id'))
+
+    datas = [ data['data_aberta__data'].strftime("%d-%m-%Y") for data in consultas]
+    quantidade = [ quantidade['quantidade'] for quantidade in consultas]
+
+    return render(request, 'dashboard.html', { 'datas': datas, 'quantidade': quantidade })
