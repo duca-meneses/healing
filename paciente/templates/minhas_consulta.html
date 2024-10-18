@@ -20,16 +20,23 @@
 
         <div class="row">
 
-            <div class="col-md">
-                <input type="text" name="especialidades" id="" class="form-control shadow-main-color" placeholder="Especialidades médias">
-            </div>
-            <div class="col-md">
-                <input type="date" name="data" id="" class="form-control shadow-main-color" placeholder="Data da consulta">
+                <div class="col-md">
+                    <form action="">
+                    <select name="especialidade" class="form-select">
+                        {% for especialidade in especialidades %}
+                            <option value="{{ especialidade.id }}">{{ especialidade }}</option>
+                        {% endfor %}
+                    </select>
+ 
+                </div>
+                <div class="col-md">
+                    <input type="date" name="data" id="" class="form-control shadow-main-color" placeholder="Data da consulta">
 
-            </div>
-            <div class="col-md">
-                <input type="submit" value="Filtrar" class="btn btn-dark-color-outline">
-            </div>
+                </div>
+                <div class="col-md">
+                    <input type="submit" value="Filtrar" class="btn btn-dark-color-outline">
+                </form>
+                </div>
         </div>
 
         <br>
